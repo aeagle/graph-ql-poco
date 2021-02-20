@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dapper.GraphQL" Version="0.4.2-beta" />
+    <PackageReference Include="DataGenerator" Version="5.0.0.178" />
+    <PackageReference Include="GraphQL" Version="3.3.2" />
+    <PackageReference Include="GraphQL.Server.Ui.Altair" Version="4.4.1" />
+    <PackageReference Include="GraphQL.Server.Ui.GraphiQL" Version="4.4.1" />
+    <PackageReference Include="GraphQL.Server.Ui.Playground" Version="4.4.1" />
+    <PackageReference Include="GraphQL.Server.Ui.Voyager" Version="4.4.1" />
+    <PackageReference Include="GraphQL.SystemTextJson" Version="3.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GraphQL.DotNet\GraphQL.DotNet.csproj" />
+    <ProjectReference Include="..\GraphQL.MockResolver\GraphQL.MockResolver.csproj" />
+    <ProjectReference Include="..\GraphQL.POCO\GraphQL.POCO.csproj" />
+    <ProjectReference Include="..\GraphQL.SQLResolver\GraphQL.SQLResolver.csproj" />
+  </ItemGroup>
+
+</Project>
