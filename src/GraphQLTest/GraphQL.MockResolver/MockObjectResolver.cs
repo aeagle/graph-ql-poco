@@ -3,23 +3,26 @@ using GraphQLTest;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace GraphQL.MockResolver
 {
     public class MockObjectResolver : IGraphQLResolver
     {
-        public IEnumerable<object> GetAll(EntityMetadataContext metadata)
+        public Task<IEnumerable<object>> GetAllAsync(EntityMetadataContext metadata)
         {
-            return Enumerable.Range(1, 10).Select(e =>
+            return Task.FromResult(Enumerable.Range(1, 10).Select(e =>
             {
                 var instance = Activator.CreateInstance(metadata.Type);
                 return instance;
-            });
+            }));
         }
 
-        public object GetByKey(params KeyValuePair<EntityMetadataProp, object>[] key)
+        public Task<object> GetByKeyAsync(
+            EntityMetadataContext metadata, 
+            params KeyValuePair<EntityMetadataProp, object>[] key)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(Activator.CreateInstance(metadata.Type));
         }
     }
 }

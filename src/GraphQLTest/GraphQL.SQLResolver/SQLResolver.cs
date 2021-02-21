@@ -1,8 +1,11 @@
-﻿using GraphQL.POCO;
+﻿using Dapper;
+using GraphQL.POCO;
 using GraphQLTest;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace GraphQL.SQLResolver
 {
@@ -15,14 +18,38 @@ namespace GraphQL.SQLResolver
             this.connectionFactory = connectionFactory ?? throw new ArgumentNullException(nameof(connectionFactory));
         }
 
-        public IEnumerable<object> GetAll(EntityMetadataContext metadata)
+        private static string BaseSql(EntityMetadataContext metadata)
         {
-            throw new NotImplementedException();
+            var schema = metadata.CustomMetadata.TryGetValue(Globals.CUSTOM_METADATA_SCHEMA, out var customSchema) ? customSchema : "dbo";
+            var table = metadata.CustomMetadata.TryGetValue(Globals.CUSTOM_METADATA_TABLE, out var customTable) ? customTable : metadata.Type.Name;
+            return $"SELECT {string.Join(",", metadata.Included.Keys.Select(f => $"[{f.ToLower()}]"))} FROM [{schema}].[{table}]";
         }
 
-        public object GetByKey(params KeyValuePair<EntityMetadataProp, object>[] key)
+        private static IDictionary<string, object> PostProcess(dynamic row)
         {
-            throw new NotImplementedException();
+            return
+                ((IDictionary<string, object>)row)
+                    .ToDictionary(key => key.Key, val => val.Value, StringComparer.OrdinalIgnoreCase);
+        }
+
+        public async Task<IEnumerable<object>> GetAllAsync(EntityMetadataContext metadata)
+        {
+            using (var connection = connectionFactory())
+            {
+                var sql = BaseSql(metadata);
+                return (await connection.QueryAsync(sql)).Select(row => PostProcess(row));
+            }
+        }
+
+        public async Task<object> GetByKeyAsync(
+            EntityMetadataContext metadata, 
+            params KeyValuePair<EntityMetadataProp, object>[] keyValues)
+        {
+            using (var connection = connectionFactory())
+            {
+                var sql = BaseSql(metadata);
+                return PostProcess(await connection.QueryFirstAsync(sql));
+            }
         }
     }
 }

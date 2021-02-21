@@ -5,13 +5,15 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLTest", "GraphQLTest\GraphQLTest.csproj", "{01370F62-A778-493A-8220-538EBBD75824}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQL.POCO", "GraphQL.POCO\GraphQL.POCO.csproj", "{F0ABB331-FF4F-4838-901C-9A3B93391657}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQL.POCO", "GraphQL.POCO\GraphQL.POCO.csproj", "{F0ABB331-FF4F-4838-901C-9A3B93391657}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQL.DotNet", "GraphQL.DotNet\GraphQL.DotNet.csproj", "{25B69C87-C651-410E-AD2E-DCB092F3329B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQL.DotNet", "GraphQL.DotNet\GraphQL.DotNet.csproj", "{25B69C87-C651-410E-AD2E-DCB092F3329B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQL.MockResolver", "GraphQL.MockResolver\GraphQL.MockResolver.csproj", "{831C7AE8-C861-48F0-BE5B-D360BA6B8DA5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQL.MockResolver", "GraphQL.MockResolver\GraphQL.MockResolver.csproj", "{831C7AE8-C861-48F0-BE5B-D360BA6B8DA5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphQL.SQLResolver", "GraphQL.SQLResolver\GraphQL.SQLResolver.csproj", "{3EADCF11-2162-47FD-94C5-2D787B5202A8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQL.SQLResolver", "GraphQL.SQLResolver\GraphQL.SQLResolver.csproj", "{3EADCF11-2162-47FD-94C5-2D787B5202A8}"
+EndProject
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "Database", "Database\Database.sqlproj", "{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,12 @@ Global
 		{3EADCF11-2162-47FD-94C5-2D787B5202A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3EADCF11-2162-47FD-94C5-2D787B5202A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3EADCF11-2162-47FD-94C5-2D787B5202A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA7617BB-33AE-49A6-8FA5-5AB506C1BD44}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

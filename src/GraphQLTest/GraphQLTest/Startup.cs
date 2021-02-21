@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using GraphQL.SQLResolver;
+using System.Data.SqlClient;
 
 namespace GraphQLTest
 {
@@ -54,16 +55,24 @@ namespace GraphQLTest
 
             services.SetupGraphQLSchema(
                 schema => schema
-                    .DefaultResolver(new MockObjectResolver())
-                    .Add<Customer>(e => e
-                        .Schema("dbo")
-                        .Table("Customers")
-                        .Key(f => f.Id)
+                    .DefaultResolver(
+                        new SQLResolver(
+                            () => new SqlConnection(
+                                @"Data Source=(LocalDb)\MSSQLLocalDB;Initial Catalog=GraphQLTest;Integrated Security=SSPI"
+                            )
+                        )
                     )
-                    .Add<Order>(e => e
-                        .Schema("dbo")
-                        .Table("Orders")
-                        .Key(f => f.Id)
+                    .Add<Customer>(x => x
+                        .EntityConfig(e => e
+                            .Table("Customers")
+                            .Key(f => f.Id)
+                        )
+                    )
+                    .Add<Order>(x => x
+                        .EntityConfig(e => e
+                            .Table("Orders")
+                            .Key(f => f.Id)
+                        )
                     )
             );
         }
