@@ -1,6 +1,6 @@
 # graph-ql-poco
 
-An experiment with GraphQL and a custom Dapper based SQL resolver which defines the GraphQL schema and queries a DB based on introspection of the model.
+An experiment with GraphQL.Net and a custom Dapper based SQL resolver which defines the GraphQL schema and queries a DB based on introspection of the model.
 
 Given the model:
 
