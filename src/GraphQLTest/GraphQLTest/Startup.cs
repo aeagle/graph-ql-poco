@@ -67,11 +67,17 @@ namespace GraphQLTest
                             .Table("Customers")
                             .Key(f => f.Id)
                         )
+                        .QueryConfig(q => q
+                            .QueryableBy(f => f.Id)
+                        )
                     )
                     .Add<Order>(x => x
                         .EntityConfig(e => e
                             .Table("Orders")
                             .Key(f => f.Id)
+                        )
+                        .QueryConfig(q => q
+                            .QueryableBy(f => f.Id)
                         )
                     )
             );

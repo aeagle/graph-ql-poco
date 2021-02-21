@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQLTest", "GraphQLTest\GraphQLTest.csproj", "{01370F62-A778-493A-8220-538EBBD75824}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQL.Test", "GraphQLTest\GraphQL.Test.csproj", "{01370F62-A778-493A-8220-538EBBD75824}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GraphQL.POCO", "GraphQL.POCO\GraphQL.POCO.csproj", "{F0ABB331-FF4F-4838-901C-9A3B93391657}"
 EndProject
