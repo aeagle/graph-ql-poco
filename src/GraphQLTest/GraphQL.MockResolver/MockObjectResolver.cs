@@ -1,4 +1,5 @@
-﻿using GraphQL.POCO;
+﻿using GraphQL.Language.AST;
+using GraphQL.POCO;
 using GraphQLTest;
 using System;
 using System.Collections.Generic;
@@ -9,20 +10,15 @@ namespace GraphQL.MockResolver
 {
     public class MockObjectResolver : IGraphQLResolver
     {
-        public Task<IEnumerable<object>> GetAllAsync(EntityMetadataContext metadata)
+        public Task<IEnumerable<object>> GetAsync(
+            IHaveSelectionSet context, 
+            EntityMetadataContext metadata)
         {
             return Task.FromResult(Enumerable.Range(1, 10).Select(e =>
             {
                 var instance = Activator.CreateInstance(metadata.Type);
                 return instance;
             }));
-        }
-
-        public Task<object> GetByKeyAsync(
-            EntityMetadataContext metadata, 
-            params KeyValuePair<EntityMetadataProp, object>[] key)
-        {
-            return Task.FromResult(Activator.CreateInstance(metadata.Type));
         }
     }
 }

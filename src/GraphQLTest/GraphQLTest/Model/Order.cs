@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace GraphQLTest.Model
+﻿namespace GraphQLTest.Model
 {
     public class Order
     {

@@ -1,7 +1,7 @@
 using GraphQL;
 using GraphQL.Execution;
-using GraphQL.MockResolver;
 using GraphQL.Server.Ui.Playground;
+using GraphQL.SQLResolver;
 using GraphQL.SystemTextJson;
 using GraphQLTest.Model;
 using Microsoft.AspNetCore.Builder;
@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using GraphQL.SQLResolver;
 using System.Data.SqlClient;
 
 namespace GraphQLTest
@@ -63,22 +62,16 @@ namespace GraphQLTest
                         )
                     )
                     .Add<Customer>(x => x
-                        .EntityConfig(e => e
-                            .Table("Customers")
-                            .Key(f => f.Id)
-                        )
-                        .QueryConfig(q => q
-                            .QueryableBy(f => f.Id)
-                        )
+                        .EntityConfig(e => 
+                            e.Table("Customers").Key(f => f.Id))
+                        .QueryConfig(q => 
+                            q.QueryableBy(f => f.Id))
                     )
                     .Add<Order>(x => x
-                        .EntityConfig(e => e
-                            .Table("Orders")
-                            .Key(f => f.Id)
-                        )
-                        .QueryConfig(q => q
-                            .QueryableBy(f => f.Id)
-                        )
+                        .EntityConfig(e => 
+                            e.Table("Orders").Key(f => f.Id))
+                        .QueryConfig(q => 
+                            q.QueryableBy(f => f.Id))
                     )
             );
         }

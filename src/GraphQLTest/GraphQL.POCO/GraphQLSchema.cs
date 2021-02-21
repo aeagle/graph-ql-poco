@@ -1,4 +1,5 @@
-﻿using GraphQL.POCO;
+﻿using GraphQL;
+using GraphQL.POCO;
 using GraphQL.Resolvers;
 using GraphQL.Types;
 using System;
@@ -57,7 +58,7 @@ namespace GraphQLTest
         {
             if (!metadata.TryGetValue(typeof(T), out var graphQLEntity))
             {
-                graphQLEntity = new GraphQLEntityContext<T>(EntityMetadata.Bind<T>().BindAllProperties());
+                graphQLEntity = new GraphQLEntityContext<T>(EntityMetadata.Get<T>().BindAllProperties());
                 metadata.Add(typeof(T), graphQLEntity);
             }
 
@@ -73,44 +74,61 @@ namespace GraphQLTest
                 Name = "QueryRoot"
             };
 
+            Dictionary<Type, ObjectGraphType> objectTypes = new Dictionary<Type, ObjectGraphType>();
+
+            async Task<object> resolveField(IResolveFieldContext<object> context, Type type)
+            {
+                if (context != null && context.Source is IDictionary<string, object> dynamicObject)
+                {
+                    var name = context?.FieldAst?.Name;
+                    if (name != null)
+                    {
+                        if (dynamicObject.TryGetValue(name, out var val))
+                        {
+                            return await Task.FromResult(val);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException($"Expected to find property or method '{name}' on type '{GraphQLName(type.Name)}' but it does not exist.");
+                        }
+                    }
+                }
+                return await NameFieldResolver.Instance.ResolveAsync(context);
+            }
+
             foreach (var graphQLEntity in metadata.Values)
             {
                 var entity = new ObjectGraphType();
                 entity.Name = GraphQLName(graphQLEntity.Entity.Type.Name);
 
-                foreach (var prop in graphQLEntity.Entity.Properties)
+                foreach (var prop in graphQLEntity.Entity.Included)
                 {
                     entity.FieldAsync(
-                        GraphQLType(prop.Value.Info.PropertyType), 
+                        GraphQLType(prop.Value.Info.PropertyType),
                         GraphQLName(prop.Key),
-                        resolve: async context =>
-                        {
-                            if (context != null && context.Source is IDictionary<string, object> dynamicObject)
-                            {
-                                var name = context?.FieldAst?.Name;
-                                if (name != null)
-                                {
-                                    if (dynamicObject.TryGetValue(name, out var val))
-                                    {
-                                        return await Task.FromResult(val);
-                                    }
-                                    else
-                                    {
-                                        throw new InvalidOperationException($"Expected to find property or method '{name}' on type '{GraphQLName(graphQLEntity.Entity.Type.Name)}' but it does not exist.");
-                                    }
-                                }
-                            }
-                            return await NameFieldResolver.Instance.ResolveAsync(context);
-                        }
+                        resolve: (ctx) => resolveField(ctx, graphQLEntity.Entity.Type)
                     );
                 }
 
-                var collection = new ListGraphType(entity);
+                objectTypes.Add(graphQLEntity.Entity.Type, entity);
+            }
+
+            foreach (var graphQLEntity in metadata.Values)
+            {
+                var entity = objectTypes[graphQLEntity.Entity.Type];
+
+                foreach (var relation in graphQLEntity.Entity.Relations)
+                {
+                    entity.FieldAsync(
+                        GraphQLName(relation.Key),
+                        new ListGraphType(objectTypes[relation.Value.EntityRightType])
+                    );
+                }
 
                 root.FieldAsync(
                     PluralGraphQLName(entity.Name),
-                    collection,
-                    resolve: async context => await defaultResolver.GetAllAsync(graphQLEntity.Entity)
+                    new ListGraphType(entity),
+                    resolve: async context => await defaultResolver.GetAsync(context.FieldAst, graphQLEntity.Entity)
                 );
             }
 

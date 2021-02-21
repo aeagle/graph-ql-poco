@@ -1,6 +1,7 @@
 ﻿using GraphQL.POCO;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -11,21 +12,31 @@ namespace GraphQLTest
         private static IDictionary<Type, EntityMetadataContext> metadata = 
             new Dictionary<Type, EntityMetadataContext>();
 
-        public static EntityMetadataContext<T> Bind<T>()
+        public static EntityMetadataContext<T> Get<T>()
         {
-            if (!metadata.TryGetValue(typeof(T), out var entityMetadata))
+            return (EntityMetadataContext<T>)Get(typeof(T));
+        }
+
+        public static EntityMetadataContext Get(Type type)
+        {
+            if (!metadata.TryGetValue(type, out var entityMetadata))
             {
-                entityMetadata = new EntityMetadataContext<T>();
-                metadata.Add(typeof(T), entityMetadata);
+                entityMetadata =
+                    (EntityMetadataContext)Activator.CreateInstance(
+                        typeof(EntityMetadataContext<>).MakeGenericType(type)
+                    );
+                metadata.Add(type, entityMetadata);
             }
 
-            return (EntityMetadataContext<T>)entityMetadata;
+            return entityMetadata;
         }
     }
 
     public abstract class EntityMetadataContext
     {
         public Type Type { get; protected set; }
+
+        public Func<object, object> PrimaryKey { get; protected set; }
 
         public Dictionary<string, EntityMetadataProp> Properties { get; private set; } =
             new Dictionary<string, EntityMetadataProp>();
@@ -35,6 +46,9 @@ namespace GraphQLTest
 
         public Dictionary<string, EntityMetadataProp> Keys { get; private set; } =
             new Dictionary<string, EntityMetadataProp>();
+
+        public Dictionary<string, EntityMetadataRelation> Relations { get; private set; } =
+            new Dictionary<string, EntityMetadataRelation>(StringComparer.OrdinalIgnoreCase);
 
         public Dictionary<string, object> CustomMetadata { get; private set; } =
             new Dictionary<string, object>();
@@ -61,6 +75,22 @@ namespace GraphQLTest
                         }
                     );
                 }
+
+                if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                {
+                    var collectionType = prop.PropertyType.GetGenericArguments()[0];
+                    Relations.Add(
+                        prop.Name,
+                        new EntityMetadataRelation()
+                        {
+                            Name = prop.Name,
+                            Info = prop,
+                            EntityLeft = this,
+                            IsCollection = true,
+                            EntityRightType = collectionType,
+                        }
+                    );
+                }
             }
         }
 
@@ -75,18 +105,18 @@ namespace GraphQLTest
             return this;
         }
 
-        public EntityMetadataContext<T> Key(params Expression<Func<T, object>>[] fields)
+        public EntityMetadataContext<T> Key(Expression<Func<T, object>> keyExpression)
         {
-            foreach (var field in fields)
+            var runnable = keyExpression.Compile();
+            PrimaryKey = (instance) => runnable((T)instance);
+
+            if (Properties.TryGetValue(ExpressionHelper.GetPropertyName(keyExpression), out var prop))
             {
-                if (Properties.TryGetValue(ExpressionHelper.GetPropertyName(field), out var prop))
-                {
-                    Keys.Add(prop.Name, prop);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Invalid expression");
-                }
+                Keys.Add(prop.Name, prop);
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid expression");
             }
 
             return this;
@@ -108,5 +138,40 @@ namespace GraphQLTest
         public string Name { get; set; }
         public string Description { get; set; }
         public PropertyInfo Info { get; set; }
+    }
+
+    public class EntityMetadataRelation
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public PropertyInfo Info { get; set; }
+        public EntityMetadataContext EntityLeft { get; set; }
+        public bool IsCollection { get; set; }
+        public Type EntityRightType { get; set; }
+
+        public void Set(object instance, object value)
+        {
+            Info.SetValue(instance, value);
+        }
+
+        public void Add(dynamic instance, dynamic value)
+        {
+            var list = Info.GetValue(instance);
+            list.Add(value);
+        }
+
+        public EntityMetadataContext EntityRight => 
+            EntityMetadata.Get(EntityRightType);
+
+        public IDictionary<string, string> EntityRightForeignKeys => 
+            EntityLeft.Keys.Values
+                .Select(k => 
+                    new
+                    {
+                        key = k.Name,
+                        foreign = $"{EntityLeft.Type.Name}{k.Name}"
+                    }
+                )
+                .ToDictionary(x => x.key, x => x.foreign);
     }
 }
