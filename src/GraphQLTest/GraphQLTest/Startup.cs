@@ -62,16 +62,12 @@ namespace GraphQLTest
                         )
                     )
                     .Add<Customer>(x => x
-                        .EntityConfig(e => 
-                            e.Table("Customers").Key(f => f.Id))
-                        .QueryConfig(q => 
-                            q.QueryableBy(f => f.Id))
+                        .EntityConfig(e => e.Table("Customers").Key(f => f.Id))
+                        .QueryConfig(q => q.QueryableBy(f => f.Id))
                     )
                     .Add<Order>(x => x
-                        .EntityConfig(e => 
-                            e.Table("Orders").Key(f => f.Id))
-                        .QueryConfig(q => 
-                            q.QueryableBy(f => f.Id))
+                        .EntityConfig(e => e.Table("Orders").Key(f => f.Id))
+                        .QueryConfig(q => q.QueryableBy(f => f.Id))
                     )
             );
         }
