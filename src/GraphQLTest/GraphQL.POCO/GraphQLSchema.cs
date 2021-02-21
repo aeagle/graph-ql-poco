@@ -99,7 +99,7 @@ namespace GraphQLTest
             foreach (var graphQLEntity in metadata.Values)
             {
                 var entity = new ObjectGraphType();
-                entity.Name = GraphQLName(graphQLEntity.Entity.Type.Name);
+                entity.Name = graphQLEntity.Entity.Type.Name;
 
                 foreach (var prop in graphQLEntity.Entity.Included)
                 {
@@ -119,10 +119,20 @@ namespace GraphQLTest
 
                 foreach (var relation in graphQLEntity.Entity.Relations)
                 {
-                    entity.FieldAsync(
-                        GraphQLName(relation.Key),
-                        new ListGraphType(objectTypes[relation.Value.EntityRightType])
-                    );
+                    if (relation.Value.IsCollection)
+                    {
+                        entity.FieldAsync(
+                            GraphQLName(relation.Key),
+                            new ListGraphType(objectTypes[relation.Value.EntityRightType])
+                        );
+                    }
+                    else
+                    {
+                        entity.FieldAsync(
+                            GraphQLName(relation.Key),
+                            objectTypes[relation.Value.EntityRightType]
+                        );
+                    }
                 }
 
                 root.FieldAsync(

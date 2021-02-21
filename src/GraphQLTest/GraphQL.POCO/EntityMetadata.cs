@@ -64,18 +64,6 @@ namespace GraphQLTest
 
             foreach (var prop in props)
             {
-                if (prop.PropertyType.IsPrimitive || prop.PropertyType == typeof(string))
-                {
-                    Properties.Add(
-                        prop.Name,
-                        new EntityMetadataProp()
-                        {
-                            Name = prop.Name,
-                            Info = prop
-                        }
-                    );
-                }
-
                 if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
                 {
                     var collectionType = prop.PropertyType.GetGenericArguments()[0];
@@ -88,6 +76,31 @@ namespace GraphQLTest
                             EntityLeft = this,
                             IsCollection = true,
                             EntityRightType = collectionType,
+                        }
+                    );
+                }
+                else if (prop.PropertyType.IsClass && prop.PropertyType != typeof(string))
+                {
+                    Relations.Add(
+                        prop.Name,
+                        new EntityMetadataRelation()
+                        {
+                            Name = prop.Name,
+                            Info = prop,
+                            EntityLeft = this,
+                            IsCollection = false,
+                            EntityRightType = prop.PropertyType
+                        }
+                    );
+                }
+                else
+                {
+                    Properties.Add(
+                        prop.Name,
+                        new EntityMetadataProp()
+                        {
+                            Name = prop.Name,
+                            Info = prop
                         }
                     );
                 }
@@ -149,7 +162,7 @@ namespace GraphQLTest
         public bool IsCollection { get; set; }
         public Type EntityRightType { get; set; }
 
-        public void Set(object instance, object value)
+        public void Set(dynamic instance, dynamic value)
         {
             Info.SetValue(instance, value);
         }
@@ -163,15 +176,26 @@ namespace GraphQLTest
         public EntityMetadataContext EntityRight => 
             EntityMetadata.Get(EntityRightType);
 
-        public IDictionary<string, string> EntityRightForeignKeys => 
-            EntityLeft.Keys.Values
-                .Select(k => 
-                    new
-                    {
-                        key = k.Name,
-                        foreign = $"{EntityLeft.Type.Name}{k.Name}"
-                    }
-                )
-                .ToDictionary(x => x.key, x => x.foreign);
+        public IDictionary<string, string> EntityRightForeignKeys =>
+            IsCollection ?
+                EntityLeft.Keys.Values
+                    .Select(k =>
+                        new
+                        {
+                            key = k.Name,
+                            foreign = $"{EntityLeft.Type.Name}{k.Name}"
+                        }
+                    )
+                    .ToDictionary(x => x.key, x => x.foreign)
+                :
+                EntityRight.Keys.Values
+                    .Select(k =>
+                        new
+                        {
+                            key = $"{EntityRight.Type.Name}{k.Name}",
+                            foreign = $"{k.Name}"
+                        }
+                    )
+                    .ToDictionary(x => x.key, x => x.foreign);
     }
 }

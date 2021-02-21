@@ -45,7 +45,19 @@ namespace GraphQL.SQLResolver
 
         private static string GetAlias(int level) => $"{(char)(level + 'a')}";
 
-        private static string ForeignKeyCriteria(string leftAlias, string rightAlias, EntityMetadataRelation relation)
+        private static string ManyForeignKeyCriteria(string leftAlias, string rightAlias, EntityMetadataRelation relation)
+        {
+            List<string> criteria = new List<string>();
+
+            foreach (var keyField in relation.EntityRightForeignKeys)
+            {
+                criteria.Add($"{leftAlias}.[{keyField.Key}] = {rightAlias}.[{keyField.Value}]");
+            }
+
+            return string.Join(" AND ", criteria);
+        }
+
+        private static string SingleForeignKeyCriteria(string leftAlias, string rightAlias, EntityMetadataRelation relation)
         {
             List<string> criteria = new List<string>();
 
@@ -63,7 +75,7 @@ namespace GraphQL.SQLResolver
             public List<dynamic> SelectFields { get; set; } = new List<dynamic>();
             public List<Type> SplitOnTypes { get; set; } = new List<Type>();
             public List<string> SplitOnFields { get; set; } = new List<string>();
-            public List<EntityMetadataRelation> SplitOnRelations { get; set; } = new List<EntityMetadataRelation>();
+            public List<EntityMetadataRelation> Relations { get; set; } = new List<EntityMetadataRelation>();
         }
 
         private static SqlGenerationContext GenerateSQL(
@@ -116,12 +128,12 @@ namespace GraphQL.SQLResolver
                 {
                     if (metadata.Relations.TryGetValue(field.Key.ToLower(), out var relation))
                     {
-                        sqlContext.SplitOnRelations.Add(relation);
+                        sqlContext.Relations.Add(relation);
                         GenerateSQL(
-                            field.Value, 
-                            relation.EntityRight, 
-                            sqlContext, 
-                            operation: SQLOperation.JOIN, 
+                            field.Value,
+                            relation.EntityRight,
+                            sqlContext,
+                            operation: SQLOperation.JOIN,
                             level: level + 1,
                             parentAlias: alias,
                             relationMetadata: relation
@@ -131,7 +143,14 @@ namespace GraphQL.SQLResolver
             }
             else if (operation == SQLOperation.JOIN)
             {
-                sqlContext.Sql += $" LEFT JOIN [{schema}].[{table}] {alias} ON {ForeignKeyCriteria(parentAlias, alias, relationMetadata)}";
+                if (relationMetadata.IsCollection)
+                {
+                    sqlContext.Sql += $" LEFT JOIN [{schema}].[{table}] {alias} ON {ManyForeignKeyCriteria(parentAlias, alias, relationMetadata)}";
+                }
+                else
+                {
+                    sqlContext.Sql += $" LEFT JOIN [{schema}].[{table}] {alias} ON {SingleForeignKeyCriteria(parentAlias, alias, relationMetadata)}";
+                }
             }
 
             if (level == 0)
@@ -174,8 +193,9 @@ namespace GraphQL.SQLResolver
                         foreach (var entity in entities)
                         {
                             var entityKey = 
-                                i == 0 ? metadata.PrimaryKey(entity) : 
-                                sql.SplitOnRelations[i - 1].EntityRight.PrimaryKey(entity);
+                                i == 0 ? 
+                                    metadata.PrimaryKey(entity) : 
+                                    sql.Relations[i - 1].EntityRight.PrimaryKey(entity);
 
                             if (mapping[i].Contains(entityKey))
                             {
@@ -192,9 +212,17 @@ namespace GraphQL.SQLResolver
                                     {
                                         foreach (var obj in objectCache[i + 1])
                                         {
-                                            sql.SplitOnRelations[i].Add(lastEntities[i], obj);
+                                            if (sql.Relations[i].IsCollection)
+                                            {
+                                                sql.Relations[i].Add(lastEntities[i], obj);
+                                            }
+                                            else
+                                            {
+                                                sql.Relations[i].Set(lastEntities[i], obj);
+                                            }
                                         }
                                         objectCache[i + 1].Clear();
+                                        mapping[i + 1].Clear();
                                     }
                                 }
 
@@ -219,7 +247,14 @@ namespace GraphQL.SQLResolver
                         {
                             foreach (var obj in objectCache[idx + 1])
                             {
-                                sql.SplitOnRelations[idx].Add(entity, obj);
+                                if (sql.Relations[idx].IsCollection)
+                                {
+                                    sql.Relations[idx].Add(entity, obj);
+                                }
+                                else
+                                {
+                                    sql.Relations[idx].Set(entity, obj);
+                                }
                             }
                             objectCache[idx + 1].Clear();
                         }
